@@ -2,7 +2,7 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import Api
 import Api.Permission exposing (Permission)
-import Html exposing (Html)
+import Element
 import Http
 import Page exposing (Page)
 import View exposing (View)
@@ -73,18 +73,19 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Pages.Home_"
-    , body =
+    , attributes = []
+    , element =
         case model.permissions of
             Api.Loading ->
-                [ Html.text "Loading..." ]
+                Element.text "Loading..."
 
             Api.Success value ->
-                [ Html.text "Got some Permissions" ]
+                Element.text "Got some Permissions"
 
             Api.Failure error ->
                 let
                     _ =
                         Debug.log "failed to load restrictions" (Debug.toString error)
                 in
-                [ Html.text "Failed to load permissions" ]
+                Element.text "Failed to load permissions"
     }

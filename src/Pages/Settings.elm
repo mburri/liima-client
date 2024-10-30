@@ -1,9 +1,10 @@
 module Pages.Settings exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
-import Route exposing (Route)
+import Element
 import Html
 import Page exposing (Page)
+import Route exposing (Route)
 import Shared
 import View exposing (View)
 
@@ -66,5 +67,6 @@ subscriptions model =
 view : Model -> View Msg
 view model =
     { title = "Pages.Settings"
-    , body = [ Html.text "/settings" ]
+    , attributes = []
+    , element = Element.text "/settings"
     }
