@@ -22,6 +22,8 @@
     "router": {
       "useHashRouting": false
     },
-    "proxy": null
+    "proxy": {
+      "/AMW_rest": "http://127.0.0.1:8080"
+    }
   }
 }
