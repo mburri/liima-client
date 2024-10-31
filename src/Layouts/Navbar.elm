@@ -2,6 +2,7 @@ module Layouts.Navbar exposing (Model, Msg, Props, layout)
 
 import Effect exposing (Effect)
 import Element exposing (..)
+import Element.Background as Background
 import Layout exposing (Layout)
 import Route exposing (Route)
 import Shared
@@ -68,14 +69,23 @@ view { toContentMsg, model, content } =
     { title = content.title
     , attributes = []
     , element =
-        column []
-            [ row []
-                [ el [] <| text "Apps"
-                , el [] <| text "Servers"
-                , el [] <| text "Resources"
-                , el [] <| text "Deploy"
-                , el [] <| text "Settings"
+        column [ width fill, height fill ]
+            [ row
+                [ width fill
+                , Background.color (rgb255 222 222 222)
                 ]
-            , content.element
+                [ row
+                    [ spacing 16
+                    , padding 16
+                    , alignRight
+                    ]
+                    [ el [] <| link [] { url = "/apps", label = text "Apps" }
+                    , el [] <| link [] { url = "/servers", label = text "Servers" }
+                    , el [] <| link [] { url = "/resources", label = text "Resources" }
+                    , el [] <| link [] { url = "/deploy", label = text "Deploy" }
+                    , el [] <| link [] { url = "/settings", label = text "Settings" }
+                    ]
+                ]
+            , el [ padding 16 ] <| content.element
             ]
     }
