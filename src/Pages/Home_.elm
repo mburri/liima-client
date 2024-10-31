@@ -2,6 +2,7 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
 import Element
+import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
@@ -20,6 +21,12 @@ page shared route =
         , subscriptions = subscriptions
         , view = view
         }
+        |> Page.withLayout toLayout
+
+
+toLayout : Model -> Layouts.Layout Msg
+toLayout _ =
+    Layouts.Navbar {}
 
 
 
