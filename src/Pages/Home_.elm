@@ -1,10 +1,10 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
-import Api
-import Api.Permission exposing (Permission)
+import Effect exposing (Effect)
 import Element
-import Http
 import Page exposing (Page)
+import Route exposing (Route)
+import Shared
 import View exposing (View)
 
 
@@ -12,9 +12,9 @@ import View exposing (View)
 -- PAGE
 
 
-page : Page Model Msg
-page =
-    Page.element
+page : Shared.Model -> Route () -> Page Model Msg
+page shared route =
+    Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
@@ -27,15 +27,13 @@ page =
 
 
 type alias Model =
-    { permissions : Api.Data (List Permission) }
+    {}
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { permissions = Api.Loading }
-    , Api.Permission.load
-        { onResponse = PermissionsRestResponded
-        }
+init : () -> ( Model, Effect Msg )
+init () =
+    ( {}
+    , Effect.none
     )
 
 
@@ -44,17 +42,14 @@ init =
 
 
 type Msg
-    = PermissionsRestResponded (Result Http.Error (List Permission))
+    = NoOp
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        PermissionsRestResponded (Ok permissions) ->
-            ( { model | permissions = Api.Success permissions }, Cmd.none )
-
-        PermissionsRestResponded (Err error) ->
-            ( { model | permissions = Api.Failure error }, Cmd.none )
+        NoOp ->
+            ( model, Effect.none )
 
 
 
@@ -75,17 +70,5 @@ view model =
     { title = "Pages.Home_"
     , attributes = []
     , element =
-        case model.permissions of
-            Api.Loading ->
-                Element.text "Loading..."
-
-            Api.Success value ->
-                Element.text "Got some Permissions"
-
-            Api.Failure error ->
-                let
-                    _ =
-                        Debug.log "failed to load restrictions" (Debug.toString error)
-                in
-                Element.text "Failed to load permissions"
+        Element.text "Home"
     }
