@@ -14,6 +14,7 @@ module Shared exposing
 
 import Api
 import Api.Endpoint
+import Api.Http
 import Api.Permission
 import Effect exposing (Effect)
 import Json.Decode
@@ -47,7 +48,7 @@ init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
     ( { permissions = Api.Loading }
     , Effect.sendApiRequest
-        { method = "GET"
+        { method = Api.Http.GET
         , endpoint = Api.Endpoint.ownPermissions
         , decoder = Api.Permission.decoder
         , onResponse = Shared.Msg.PermissionsRestResponded

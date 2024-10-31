@@ -24,6 +24,7 @@ module Effect exposing
 
 -}
 
+import Api.Http
 import Browser.Navigation
 import Dict exposing (Dict)
 import Http
@@ -49,7 +50,7 @@ type Effect msg
       -- SHARED
     | SendSharedMsg Shared.Msg.Msg
     | SendApiRequest
-        { method : String
+        { method : Api.Http.Method
         , endpoint : String
         , decoder : Json.Decode.Decoder msg
         , onHttpError : Http.Error -> msg
@@ -148,7 +149,7 @@ back =
 
 
 sendApiRequest :
-    { method : String
+    { method : Api.Http.Method
     , endpoint : String
     , decoder : Json.Decode.Decoder value
     , onResponse : Result Http.Error value -> msg
@@ -258,7 +259,7 @@ toCmd options effect =
 
         SendApiRequest data ->
             Http.request
-                { method = "GET"
+                { method = Api.Http.stringOf data.method
                 , url = data.endpoint
                 , headers = [ Http.header "Accept" "application/json" ]
                 , body = Http.emptyBody
