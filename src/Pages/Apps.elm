@@ -1,8 +1,12 @@
 module Pages.Apps exposing (Model, Msg, page)
 
+import Api
+import Api.ApplicationServer exposing (ApplicationServer)
+import Api.Endpoint
+import Api.Http exposing (Method(..))
 import Effect exposing (Effect)
 import Element
-import Html
+import Http
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -31,13 +35,19 @@ toLayout _ =
 
 
 type alias Model =
-    {}
+    { applicationServers : Api.Data (List ApplicationServer)
+    }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( {}
-    , Effect.none
+    ( { applicationServers = Api.Loading }
+    , Effect.sendApiRequest
+        { method = GET
+        , decoder = Api.ApplicationServer.decoder
+        , endpoint = Api.Endpoint.applicationServers "1"
+        , onResponse = GotApplicationServerResponse
+        }
     )
 
 
@@ -46,16 +56,17 @@ init () =
 
 
 type Msg
-    = NoOp
+    = GotApplicationServerResponse (Result Http.Error (List ApplicationServer))
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Effect.none
-            )
+        GotApplicationServerResponse (Ok applicationServers) ->
+            ( { model | applicationServers = Api.Success applicationServers }, Effect.none )
+
+        GotApplicationServerResponse (Err error) ->
+            ( { model | applicationServers = Api.Failure error }, Effect.none )
 
 
 
