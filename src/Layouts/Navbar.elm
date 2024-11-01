@@ -86,6 +86,6 @@ view { toContentMsg, model, content } =
                     , el [] <| link [] { url = "/settings", label = text "Settings" }
                     ]
                 ]
-            , el [ padding 16 ] <| content.element
+            , el [ padding 16, width fill, height fill ] <| content.element
             ]
     }
