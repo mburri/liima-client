@@ -8,6 +8,7 @@ import Layout exposing (Layout)
 import Route exposing (Route)
 import Route.Path exposing (Path)
 import Shared
+import Style.Palette
 import View exposing (View)
 
 
@@ -74,28 +75,34 @@ view route { toContentMsg, model, content } =
         column [ width fill, height fill ]
             [ row
                 [ width fill
-                , Background.color (rgb255 0 0 0)
+                , Background.color Style.Palette.grayScale.black
                 ]
                 [ row
-                    [ spacing 16
-                    , padding 16
+                    [ spacing Style.Palette.size.l
+                    , padding Style.Palette.size.m
                     , alignRight
-                    , Font.color (rgba255 255 255 255 0.55)
+                    , Font.color Style.Palette.grayScale.light
                     ]
-                    [ el [] <| link [] { url = "/apps", label = text "Apps" }
-                    , el [] <| link [] { url = "/servers", label = text "Servers" }
-                    , el [] <| link [] { url = "/resources", label = text "Resources" }
-                    , el [] <| link [] { url = "/deploy", label = text "Deploy" }
-                    , el [] <| link [] { url = "/settings", label = text "Settings" }
+                    [ link [] { url = "/apps", label = text "Apps" }
+                    , link [] { url = "/servers", label = text "Servers" }
+                    , link [] { url = "/resources", label = text "Resources" }
+                    , link [] { url = "/deploy", label = text "Deploy" }
+                    , link [] { url = "/settings", label = text "Settings" }
                     ]
                 ]
             , row
                 [ width fill
-                , paddingXY 16 12
-                , Background.color (rgb255 222 222 222)
+                , padding Style.Palette.size.m
+                , Background.color Style.Palette.grayScale.light
                 ]
-                [ el [ Font.bold, Font.size 18 ] <| text (toPageTitle route.path) ]
-            , el [ padding 16, width fill, height fill ] <| content.element
+                [ el [ Font.bold, Font.size Style.Palette.fontSize.large ] <| text (toPageTitle route.path) ]
+            , el
+                [ width fill
+                , height fill
+                , padding Style.Palette.size.m
+                ]
+              <|
+                content.element
             ]
     }
 

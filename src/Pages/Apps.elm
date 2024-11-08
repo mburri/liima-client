@@ -4,6 +4,9 @@ import Api
 import Api.ApplicationServer exposing (Application, ApplicationServer)
 import Api.Endpoint
 import Api.Http exposing (Method(..))
+import Components.Button as Button
+import Components.Error as Error
+import Components.Loading as Loading
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -15,6 +18,7 @@ import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import Style.Palette as Palette
 import View exposing (View)
 
 
@@ -121,24 +125,14 @@ view model =
     , element =
         case model.applicationServers of
             Api.Failure error ->
-                viewError error
+                Error.view error "Error loading application servers"
 
             Api.Loading ->
-                viewLoading
+                Loading.view
 
             Api.Success applicationServers ->
                 viewApplicationServers applicationServers model.filter
     }
-
-
-viewError : Http.Error -> Element msg
-viewError error =
-    el [] <| text "Error loading application servers"
-
-
-viewLoading : Element msg
-viewLoading =
-    el [] <| text "loading data..."
 
 
 viewApplicationServers : List ApplicationServer -> Filter -> Element Msg
@@ -146,9 +140,9 @@ viewApplicationServers applicationServers filter =
     column
         [ width fill
         , Border.solid
-        , Border.rounded 5
+        , Border.rounded Palette.size.s
         , Border.width 1
-        , Border.color (rgb255 152 153 152)
+        , Border.color Palette.grayScale.dark
         ]
         ([ viewTitleBar
          , viewFilter filter
@@ -163,35 +157,27 @@ viewTitleBar =
     row
         [ width fill
         , spacing 16
-        , Background.color (rgb255 233 233 233)
-        , Border.roundEach { bottomLeft = 0, bottomRight = 0, topLeft = 5, topRight = 5 }
+        , Background.color Palette.grayScale.light
+        , Border.roundEach { bottomLeft = 0, bottomRight = 0, topLeft = Palette.size.s, topRight = Palette.size.s }
         , Border.widthEach { right = 0, top = 0, left = 0, bottom = 1 }
-        , Border.color (rgb255 152 153 152)
-        , paddingXY 12 6
+        , Border.color Palette.grayScale.dark
+        , padding Palette.size.m
         ]
         [ el [ Font.bold ] <| text "Application Servers and Applications"
-        , viewButton "Add Application Server" Nothing
-        , viewButton "Add Application" Nothing
+        , Button.view "Add Application Server" Nothing
+        , Button.view "Add Application" Nothing
         ]
-
-
-viewButton : String -> Maybe msg -> Element msg
-viewButton label msg =
-    Input.button
-        [ Font.color (rgb255 255 255 255)
-        , Background.color (rgb255 13 110 253)
-        , Border.rounded 6
-        , paddingXY 12 12
-        , alignRight
-        ]
-        { label = text label, onPress = msg }
 
 
 viewFilter : Filter -> Element Msg
 viewFilter filter =
-    column [ width fill, paddingXY 12 12, spacing 12 ]
+    column
+        [ width fill
+        , padding Palette.size.m
+        , spacing Palette.size.m
+        ]
         [ el [ Font.bold ] <| text "Add Filter"
-        , row [ spacing 24, width fill ]
+        , row [ spacing Palette.size.xl, width fill ]
             [ Input.text [ width (fillPortion 3) ]
                 { onChange = InputChanged NameInput
                 , text = filter.name
@@ -207,10 +193,10 @@ viewFilter filter =
             , el
                 [ width (fillPortion 1)
                 , alignBottom
-                , paddingXY 0 2
+                , moveUp 2.0 -- TODO: would be nice to get rid of this
                 ]
               <|
-                viewButton "Search" Nothing
+                Button.view "Search" Nothing
             ]
         ]
 
@@ -219,10 +205,10 @@ viewHeader : Element Msg
 viewHeader =
     row
         [ width fill
-        , Background.color (rgb255 233 233 233)
-        , paddingXY 12 12
+        , Background.color Palette.grayScale.light
+        , padding Palette.size.m
         , Border.widthEach { top = 1, bottom = 1, left = 0, right = 0 }
-        , Border.color (rgb255 211 211 211)
+        , Border.color Palette.grayScale.dark
         ]
         [ el [ Font.bold, width (fillPortion 4) ] <| text "App Name"
         , el [ Font.bold, width (fillPortion 1) ] <| text "Release"
@@ -231,10 +217,20 @@ viewHeader =
 
 viewApplicationServer : ApplicationServer -> Element msg
 viewApplicationServer applicationServer =
-    column [ width fill, paddingXY 12 6 ]
-        ([ row [ width fill, paddingXY 0 6 ]
-            [ el [ Font.bold, width (fillPortion 4) ] <| text (applicationServer.name ++ " [ " ++ applicationServer.runtime ++ " ] ")
-            , el [ alignRight, width (fillPortion 1) ] <| text applicationServer.release.name
+    column [ width fill, padding Palette.size.m ]
+        ([ row [ width fill ]
+            [ el
+                [ Font.bold
+                , width (fillPortion 4)
+                ]
+              <|
+                text (applicationServer.name ++ " [ " ++ applicationServer.runtime ++ " ] ")
+            , el
+                [ alignRight
+                , width (fillPortion 1)
+                ]
+              <|
+                text applicationServer.release.name
             ]
          ]
             ++ List.map viewApplication applicationServer.apps
@@ -243,7 +239,7 @@ viewApplicationServer applicationServer =
 
 viewApplication : Application -> Element msg
 viewApplication application =
-    row [ width fill ]
+    row [ width fill, paddingXY 0 Palette.size.s ]
         [ el [ width (fillPortion 4) ] <| text application.name
         , el [ alignRight, width (fillPortion 1) ] <| text application.release.name
         ]
