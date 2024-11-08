@@ -4,6 +4,7 @@ import Api
 import Api.ApplicationServer exposing (Application, ApplicationServer)
 import Api.Endpoint
 import Api.Http exposing (Method(..))
+import Api.Release as Release exposing (Release)
 import Components.Button as Button
 import Components.Error as Error
 import Components.Loading as Loading
@@ -14,9 +15,11 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Http
+import Json.Decode
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
+import SearchBox
 import Shared
 import Style.Palette as Palette
 import View exposing (View)
@@ -43,44 +46,58 @@ toLayout _ =
 
 
 type alias Filter =
-    { name : String, release : String }
+    { name : String, release : Maybe Release, releaseText : String, releaseSearchBox : SearchBox.State }
 
 
 emptyFilter : Filter
 emptyFilter =
-    { name = "", release = "" }
+    { name = "", release = Nothing, releaseText = "", releaseSearchBox = SearchBox.init }
 
 
 type alias Model =
     { applicationServers : Api.Data (List ApplicationServer)
+    , releases : Api.Data (List Release)
     , filter : Filter
     }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( { applicationServers = Api.Loading, filter = emptyFilter }
-    , Effect.sendApiRequest
+    ( { applicationServers = Api.Loading, filter = emptyFilter, releases = Api.Loading }
+    , Effect.batch
+        [ loadApplicationServers
+        , loadReleases
+        ]
+    )
+
+
+loadApplicationServers =
+    Effect.sendApiRequest
         { method = GET
         , decoder = Api.ApplicationServer.decoder
         , endpoint = Api.Endpoint.applicationServers "1" -- TODO: get a valid release
         , onResponse = GotApplicationServerResponse
         }
-    )
+
+
+loadReleases =
+    Effect.sendApiRequest
+        { method = GET
+        , decoder = Json.Decode.list Release.decoder
+        , endpoint = Api.Endpoint.releases
+        , onResponse = GotReleasesResponse
+        }
 
 
 
 -- UPDATE
 
 
-type FilterInputField
-    = NameInput
-    | ReleaseInput
-
-
 type Msg
     = GotApplicationServerResponse (Result Http.Error (List ApplicationServer))
-    | InputChanged FilterInputField String
+    | GotReleasesResponse (Result Http.Error (List Release))
+    | NameInputChanged String
+    | ChangedReleaseSearchBox (SearchBox.ChangeEvent Release)
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -92,17 +109,60 @@ update msg model =
         GotApplicationServerResponse (Err error) ->
             ( { model | applicationServers = Api.Failure error }, Effect.none )
 
-        InputChanged filterInputField input ->
-            case filterInputField of
-                NameInput ->
-                    ( { model | filter = { name = input, release = model.filter.release } }
+        GotReleasesResponse (Ok releases) ->
+            ( { model | releases = Api.Success releases }, Effect.none )
+
+        GotReleasesResponse (Err error) ->
+            ( { model | releases = Api.Failure error }, Effect.none )
+
+        NameInputChanged name ->
+            ( { model | filter = withName name model.filter }
+            , Effect.none
+            )
+
+        ChangedReleaseSearchBox changeEvent ->
+            case changeEvent of
+                SearchBox.SelectionChanged release ->
+                    ( { model | filter = withReleaseSelected (Just release) model.filter }, Effect.none )
+
+                SearchBox.TextChanged releaseText ->
+                    ( { model
+                        | filter =
+                            model.filter
+                                |> withReleaseText releaseText
+                                |> withResetSearchBox
+                                |> withReleaseSelected Nothing
+                      }
                     , Effect.none
                     )
 
-                ReleaseInput ->
-                    ( { model | filter = { name = model.filter.name, release = input } }
-                    , Effect.none
-                    )
+                SearchBox.SearchBoxChanged subMsg ->
+                    ( { model | filter = withSearchBoxChanged subMsg model.filter }, Effect.none )
+
+
+withName : String -> Filter -> Filter
+withName name filter =
+    { filter | name = name }
+
+
+withReleaseSelected : Maybe Release -> Filter -> Filter
+withReleaseSelected release filter =
+    { filter | release = release }
+
+
+withReleaseText : String -> Filter -> Filter
+withReleaseText releaseText filter =
+    { filter | releaseText = releaseText }
+
+
+withSearchBoxChanged : SearchBox.Msg -> Filter -> Filter
+withSearchBoxChanged msg filter =
+    { filter | releaseSearchBox = SearchBox.update msg filter.releaseSearchBox }
+
+
+withResetSearchBox : Filter -> Filter
+withResetSearchBox filter =
+    { filter | releaseSearchBox = SearchBox.reset filter.releaseSearchBox }
 
 
 
@@ -131,12 +191,12 @@ view model =
                 Loading.view
 
             Api.Success applicationServers ->
-                viewApplicationServers applicationServers model.filter
+                viewApplicationServers applicationServers model.filter model.releases
     }
 
 
-viewApplicationServers : List ApplicationServer -> Filter -> Element Msg
-viewApplicationServers applicationServers filter =
+viewApplicationServers : List ApplicationServer -> Filter -> Api.Data (List Release) -> Element Msg
+viewApplicationServers applicationServers filter releases =
     column
         [ width fill
         , Border.solid
@@ -145,7 +205,7 @@ viewApplicationServers applicationServers filter =
         , Border.color Palette.grayScale.dark
         ]
         ([ viewTitleBar
-         , viewFilter filter
+         , viewFilter releases filter
          , viewHeader
          ]
             ++ List.map viewApplicationServer applicationServers
@@ -169,8 +229,20 @@ viewTitleBar =
         ]
 
 
-viewFilter : Filter -> Element Msg
-viewFilter filter =
+viewFilter : Api.Data (List Release) -> Filter -> Element Msg
+viewFilter releases filter =
+    let
+        availableReleases =
+            case releases of
+                Api.Loading ->
+                    []
+
+                Api.Success value ->
+                    value
+
+                Api.Failure error ->
+                    []
+    in
     column
         [ width fill
         , padding Palette.size.m
@@ -179,16 +251,25 @@ viewFilter filter =
         [ el [ Font.bold ] <| text "Add Filter"
         , row [ spacing Palette.size.xl, width fill ]
             [ Input.text [ width (fillPortion 3) ]
-                { onChange = InputChanged NameInput
+                { onChange = NameInputChanged
                 , text = filter.name
                 , label = Input.labelAbove [] <| text "Application/ AS name"
                 , placeholder = Nothing
                 }
-            , Input.text [ width (fillPortion 2) ]
-                { onChange = InputChanged ReleaseInput
-                , text = filter.release
+            , SearchBox.input [ width (fillPortion 2) ]
+                { onChange = ChangedReleaseSearchBox
+                , text = filter.releaseText
+                , selected = filter.release
+                , options = Just availableReleases
                 , label = Input.labelAbove [] <| text "Release"
                 , placeholder = Nothing
+                , toLabel = \release -> release.name
+                , filter =
+                    \query release ->
+                        release.name
+                            |> String.toLower
+                            |> String.contains (String.toLower query)
+                , state = filter.releaseSearchBox
                 }
             , el
                 [ width (fillPortion 1)

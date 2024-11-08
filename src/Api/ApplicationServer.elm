@@ -1,12 +1,7 @@
-module Api.ApplicationServer exposing (..)
+module Api.ApplicationServer exposing (Application, ApplicationServer, decoder)
 
+import Api.Release as Release exposing (Release)
 import Json.Decode
-
-
-type alias Release =
-    { id : Int
-    , name : String
-    }
 
 
 type alias Application =
@@ -36,15 +31,8 @@ applicationServerDecoder =
         (Json.Decode.field "id" Json.Decode.int)
         (Json.Decode.field "name" Json.Decode.string)
         (Json.Decode.field "runtimeName" Json.Decode.string)
-        (Json.Decode.field "release" releaseDecoder)
+        (Json.Decode.field "release" Release.decoder)
         (Json.Decode.field "apps" appsDecoder)
-
-
-releaseDecoder : Json.Decode.Decoder Release
-releaseDecoder =
-    Json.Decode.map2 Release
-        (Json.Decode.field "id" Json.Decode.int)
-        (Json.Decode.field "name" Json.Decode.string)
 
 
 appsDecoder : Json.Decode.Decoder (List Application)
@@ -57,4 +45,4 @@ appDecoder =
     Json.Decode.map3 Application
         (Json.Decode.field "id" Json.Decode.int)
         (Json.Decode.field "name" Json.Decode.string)
-        (Json.Decode.field "release" releaseDecoder)
+        (Json.Decode.field "release" Release.decoder)
