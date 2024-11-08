@@ -14,6 +14,7 @@ module View exposing
 
 import Browser
 import Element
+import Element.Font as Font
 import Route exposing (Route)
 import Shared.Model
 
@@ -35,8 +36,12 @@ toBrowserDocument :
     }
     -> Browser.Document msg
 toBrowserDocument { view } =
+    let
+        attrs =
+            [ Font.size 14 ] ++ view.attributes
+    in
     { title = view.title
-    , body = [ Element.layout view.attributes view.element ]
+    , body = [ Element.layout attrs view.element ]
     }
 
 
