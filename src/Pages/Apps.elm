@@ -145,10 +145,14 @@ viewApplicationServers : List ApplicationServer -> Filter -> Element Msg
 viewApplicationServers applicationServers filter =
     column
         [ width fill
+        , Border.solid
+        , Border.rounded 5
+        , Border.width 1
+        , Border.color (rgb255 152 153 152)
         ]
         ([ viewTitleBar
-         , viewHeader
          , viewFilter filter
+         , viewHeader
          ]
             ++ List.map viewApplicationServer applicationServers
         )
@@ -156,8 +160,16 @@ viewApplicationServers applicationServers filter =
 
 viewTitleBar : Element Msg
 viewTitleBar =
-    row [ width fill, spacing 16 ]
-        [ el [] <| text "Application Servers and Applications"
+    row
+        [ width fill
+        , spacing 16
+        , Background.color (rgb255 233 233 233)
+        , Border.roundEach { bottomLeft = 0, bottomRight = 0, topLeft = 5, topRight = 5 }
+        , Border.widthEach { right = 0, top = 0, left = 0, bottom = 1 }
+        , Border.color (rgb255 152 153 152)
+        , paddingXY 12 6
+        ]
+        [ el [ Font.bold ] <| text "Application Servers and Applications"
         , viewButton "Add Application Server" Nothing
         , viewButton "Add Application" Nothing
         ]
@@ -169,48 +181,60 @@ viewButton label msg =
         [ Font.color (rgb255 255 255 255)
         , Background.color (rgb255 13 110 253)
         , Border.rounded 6
-        , paddingXY 12 6
+        , paddingXY 12 12
         , alignRight
         ]
         { label = text label, onPress = msg }
 
 
-viewHeader : Element Msg
-viewHeader =
-    row [ width fill ]
-        [ el [] <| text "App Name"
-        , el [ alignRight ] <| text "Release"
-        ]
-
-
 viewFilter : Filter -> Element Msg
 viewFilter filter =
-    column [ width fill ]
-        [ el [] <| text "Add Filter"
-        , row [ width fill ]
-            [ Input.text []
+    column [ width fill, paddingXY 12 12, spacing 12 ]
+        [ el [ Font.bold ] <| text "Add Filter"
+        , row [ spacing 24, width fill ]
+            [ Input.text [ width (fillPortion 3) ]
                 { onChange = InputChanged NameInput
                 , text = filter.name
                 , label = Input.labelAbove [] <| text "Application/ AS name"
                 , placeholder = Nothing
                 }
-            , Input.text []
+            , Input.text [ width (fillPortion 2) ]
                 { onChange = InputChanged ReleaseInput
                 , text = filter.release
                 , label = Input.labelAbove [] <| text "Release"
                 , placeholder = Nothing
                 }
-            , viewButton "Search" Nothing
+            , el
+                [ width (fillPortion 1)
+                , alignBottom
+                , paddingXY 0 2
+                ]
+              <|
+                viewButton "Search" Nothing
             ]
+        ]
+
+
+viewHeader : Element Msg
+viewHeader =
+    row
+        [ width fill
+        , Background.color (rgb255 233 233 233)
+        , paddingXY 12 12
+        , Border.widthEach { top = 1, bottom = 1, left = 0, right = 0 }
+        , Border.color (rgb255 211 211 211)
+        ]
+        [ el [ Font.bold, width (fillPortion 4) ] <| text "App Name"
+        , el [ Font.bold, width (fillPortion 1) ] <| text "Release"
         ]
 
 
 viewApplicationServer : ApplicationServer -> Element msg
 viewApplicationServer applicationServer =
-    column [ width fill ]
-        ([ row [ width fill ]
-            [ el [] <| text applicationServer.name
-            , el [ alignRight ] <| text applicationServer.release.name
+    column [ width fill, paddingXY 12 6 ]
+        ([ row [ width fill, paddingXY 0 6 ]
+            [ el [ Font.bold, width (fillPortion 4) ] <| text (applicationServer.name ++ " [ " ++ applicationServer.runtime ++ " ] ")
+            , el [ alignRight, width (fillPortion 1) ] <| text applicationServer.release.name
             ]
          ]
             ++ List.map viewApplication applicationServer.apps
@@ -219,7 +243,7 @@ viewApplicationServer applicationServer =
 
 viewApplication : Application -> Element msg
 viewApplication application =
-    row [ width fill, paddingEach { top = 0, bottom = 0, left = 16, right = 0 } ]
-        [ el [] <| text application.name
-        , el [ alignRight ] <| text application.release.name
+    row [ width fill ]
+        [ el [ width (fillPortion 4) ] <| text application.name
+        , el [ alignRight, width (fillPortion 1) ] <| text application.release.name
         ]
