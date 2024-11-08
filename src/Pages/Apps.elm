@@ -6,6 +6,9 @@ import Api.Endpoint
 import Api.Http exposing (Method(..))
 import Effect exposing (Effect)
 import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
 import Element.Input as Input
 import Http
 import Layouts
@@ -155,9 +158,21 @@ viewTitleBar : Element Msg
 viewTitleBar =
     row [ width fill, spacing 16 ]
         [ el [] <| text "Application Servers and Applications"
-        , Input.button [ alignRight ] { label = text "Add Application Server", onPress = Nothing }
-        , Input.button [] { label = text "Add Application", onPress = Nothing }
+        , viewButton "Add Application Server" Nothing
+        , viewButton "Add Application" Nothing
         ]
+
+
+viewButton : String -> Maybe msg -> Element msg
+viewButton label msg =
+    Input.button
+        [ Font.color (rgb255 255 255 255)
+        , Background.color (rgb255 13 110 253)
+        , Border.rounded 6
+        , paddingXY 12 6
+        , alignRight
+        ]
+        { label = text label, onPress = msg }
 
 
 viewHeader : Element Msg
@@ -185,7 +200,7 @@ viewFilter filter =
                 , label = Input.labelAbove [] <| text "Release"
                 , placeholder = Nothing
                 }
-            , Input.button [] { onPress = Nothing, label = text "Search" }
+            , viewButton "Search" Nothing
             ]
         ]
 
