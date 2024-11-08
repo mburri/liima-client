@@ -4,14 +4,14 @@ import Element exposing (Element, alignRight, htmlAttribute, padding, paddingXY,
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
+import Element.Input as Input exposing (Label)
 import Element.Region as Region
 import Html.Attributes
 import Style.Palette as Palette
 
 
-view : List (Element.Attribute msg) -> String -> Maybe msg -> Element msg
-view attrs label msg =
+view : List (Element.Attribute msg) -> { label : Element msg, onPress : Maybe msg } -> Element msg
+view attrs =
     Input.button
         ([ Font.color Palette.grayScale.white
          , Background.color Palette.color.primary
@@ -20,7 +20,6 @@ view attrs label msg =
          ]
             ++ attrs
         )
-        { label = text label, onPress = msg }
 
 
 disabled : { label : String, description : String } -> Element msg

@@ -236,8 +236,8 @@ viewTitleBar =
         , padding Palette.size.m
         ]
         [ el [ Font.bold ] <| text "Application Servers and Applications"
-        , Button.view [ alignRight ] "Add Application Server" Nothing
-        , Button.view [] "Add Application" Nothing
+        , Button.view [ alignRight ] { label = text "Add Application Server", onPress = Nothing }
+        , Button.view [] { label = text "Add Application", onPress = Nothing }
         ]
 
 
@@ -306,7 +306,7 @@ viewSearchButton maybeRelease =
                 }
 
         Just _ ->
-            Button.view [ alignRight ] "Search" (Just SearchButtonClicked)
+            Button.view [ alignRight ] { label = text "Search", onPress = Just SearchButtonClicked }
 
 
 viewHeader : Element Msg
