@@ -1,20 +1,39 @@
-module Components.Button exposing (view)
+module Components.Button exposing (disabled, view)
 
-import Element exposing (Element, alignRight, paddingXY, text)
+import Element exposing (Element, alignRight, htmlAttribute, padding, paddingXY, pointer, text)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Style.Palette
+import Element.Region as Region
+import Html.Attributes
+import Style.Palette as Palette
 
 
-view : String -> Maybe msg -> Element msg
-view label msg =
+view : List (Element.Attribute msg) -> String -> Maybe msg -> Element msg
+view attrs label msg =
     Input.button
-        [ Font.color Style.Palette.grayScale.white
-        , Background.color Style.Palette.color.primary
-        , Border.rounded 6
-        , paddingXY 12 12
-        , alignRight
-        ]
+        ([ Font.color Palette.grayScale.white
+         , Background.color Palette.color.primary
+         , Border.rounded Palette.size.s
+         , paddingXY Palette.size.m Palette.size.s
+         ]
+            ++ attrs
+        )
         { label = text label, onPress = msg }
+
+
+disabled : { label : String, description : String } -> Element msg
+disabled { label, description } =
+    Input.button
+        [ Font.color Palette.color.primarySubtle
+        , Background.color Palette.grayScale.white
+        , Border.color Palette.color.primarySubtle
+        , Border.rounded Palette.size.s
+        , Border.solid
+        , Border.width 1
+        , htmlAttribute (Html.Attributes.style "cursor" "not-allowed")
+        , paddingXY Palette.size.m Palette.size.s
+        , Region.description description
+        ]
+        { label = text label, onPress = Nothing }

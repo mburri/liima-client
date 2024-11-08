@@ -4,6 +4,7 @@ import Http
 
 
 type Data value
-    = Loading
+    = NotAsked
+    | Loading
     | Success value
     | Failure Http.Error

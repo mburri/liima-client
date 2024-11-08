@@ -46,12 +46,20 @@ toLayout _ =
 
 
 type alias Filter =
-    { name : String, release : Maybe Release, releaseText : String, releaseSearchBox : SearchBox.State }
+    { name : String
+    , release : Maybe Release
+    , releaseText : String
+    , releaseSearchBox : SearchBox.State
+    }
 
 
 emptyFilter : Filter
 emptyFilter =
-    { name = "", release = Nothing, releaseText = "", releaseSearchBox = SearchBox.init }
+    { name = ""
+    , release = Nothing
+    , releaseText = ""
+    , releaseSearchBox = SearchBox.init
+    }
 
 
 type alias Model =
@@ -63,21 +71,29 @@ type alias Model =
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( { applicationServers = Api.Loading, filter = emptyFilter, releases = Api.Loading }
+    ( { applicationServers = Api.NotAsked
+      , filter = emptyFilter
+      , releases = Api.Loading
+      }
     , Effect.batch
-        [ loadApplicationServers
-        , loadReleases
+        [ loadReleases
         ]
     )
 
 
-loadApplicationServers =
-    Effect.sendApiRequest
-        { method = GET
-        , decoder = Api.ApplicationServer.decoder
-        , endpoint = Api.Endpoint.applicationServers "1" -- TODO: get a valid release
-        , onResponse = GotApplicationServerResponse
-        }
+loadApplicationServers : Filter -> Effect Msg
+loadApplicationServers filter =
+    case filter.release of
+        Just release ->
+            Effect.sendApiRequest
+                { method = GET
+                , decoder = Api.ApplicationServer.decoder
+                , endpoint = Api.Endpoint.applicationServers filter.name release
+                , onResponse = GotApplicationServerResponse
+                }
+
+        Nothing ->
+            Effect.none
 
 
 loadReleases =
@@ -98,6 +114,7 @@ type Msg
     | GotReleasesResponse (Result Http.Error (List Release))
     | NameInputChanged String
     | ChangedReleaseSearchBox (SearchBox.ChangeEvent Release)
+    | SearchButtonClicked
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -138,6 +155,11 @@ update msg model =
 
                 SearchBox.SearchBoxChanged subMsg ->
                     ( { model | filter = withSearchBoxChanged subMsg model.filter }, Effect.none )
+
+        SearchButtonClicked ->
+            ( { model | applicationServers = Api.Loading }
+            , loadApplicationServers model.filter
+            )
 
 
 withName : String -> Filter -> Filter
@@ -183,33 +205,23 @@ view model =
     { title = "Liima - Application servers and applications"
     , attributes = []
     , element =
-        case model.applicationServers of
-            Api.Failure error ->
-                Error.view error "Error loading application servers"
-
-            Api.Loading ->
-                Loading.view
-
-            Api.Success applicationServers ->
-                viewApplicationServers applicationServers model.filter model.releases
+        column
+            [ width fill
+            , Border.solid
+            , Border.roundEach
+                { topLeft = Palette.size.s
+                , topRight = Palette.size.s
+                , bottomRight = 0
+                , bottomLeft = 0
+                }
+            , Border.width 1
+            , Border.color Palette.grayScale.dark
+            ]
+            [ viewTitleBar
+            , viewFilter model.releases model.filter
+            , viewApplicationServers model.applicationServers
+            ]
     }
-
-
-viewApplicationServers : List ApplicationServer -> Filter -> Api.Data (List Release) -> Element Msg
-viewApplicationServers applicationServers filter releases =
-    column
-        [ width fill
-        , Border.solid
-        , Border.rounded Palette.size.s
-        , Border.width 1
-        , Border.color Palette.grayScale.dark
-        ]
-        ([ viewTitleBar
-         , viewFilter releases filter
-         , viewHeader
-         ]
-            ++ List.map viewApplicationServer applicationServers
-        )
 
 
 viewTitleBar : Element Msg
@@ -224,8 +236,8 @@ viewTitleBar =
         , padding Palette.size.m
         ]
         [ el [ Font.bold ] <| text "Application Servers and Applications"
-        , Button.view "Add Application Server" Nothing
-        , Button.view "Add Application" Nothing
+        , Button.view [ alignRight ] "Add Application Server" Nothing
+        , Button.view [] "Add Application" Nothing
         ]
 
 
@@ -234,6 +246,9 @@ viewFilter releases filter =
     let
         availableReleases =
             case releases of
+                Api.NotAsked ->
+                    []
+
                 Api.Loading ->
                     []
 
@@ -273,13 +288,25 @@ viewFilter releases filter =
                 }
             , el
                 [ width (fillPortion 1)
-                , alignBottom
-                , moveUp 2.0 -- TODO: would be nice to get rid of this
+                , moveDown 8
                 ]
               <|
-                Button.view "Search" Nothing
+                viewSearchButton filter.release
             ]
         ]
+
+
+viewSearchButton : Maybe Release -> Element Msg
+viewSearchButton maybeRelease =
+    case maybeRelease of
+        Nothing ->
+            Button.disabled
+                { label = "Select a release"
+                , description = "A release is required before searching application servers is possible."
+                }
+
+        Just _ ->
+            Button.view [ alignRight ] "Search" (Just SearchButtonClicked)
 
 
 viewHeader : Element Msg
@@ -296,9 +323,28 @@ viewHeader =
         ]
 
 
+viewApplicationServers : Api.Data (List ApplicationServer) -> Element Msg
+viewApplicationServers data =
+    case data of
+        Api.NotAsked ->
+            Element.none
+
+        Api.Failure error ->
+            Error.view error "Error loading application servers"
+
+        Api.Loading ->
+            Loading.view
+
+        Api.Success applicationServers ->
+            column [ width fill ]
+                ([ viewHeader ]
+                    ++ List.map viewApplicationServer applicationServers
+                )
+
+
 viewApplicationServer : ApplicationServer -> Element msg
 viewApplicationServer applicationServer =
-    column [ width fill, padding Palette.size.m ]
+    column [ width fill, paddingXY Palette.size.m Palette.size.s ]
         ([ row [ width fill ]
             [ el
                 [ Font.bold

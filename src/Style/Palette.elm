@@ -1,6 +1,6 @@
 module Style.Palette exposing (color, fontSize, grayScale, size)
 
-import Element exposing (Color, rgb255)
+import Element exposing (Color, rgb255, rgba255)
 
 
 fontSize : { medium : Int, large : Int }
@@ -10,9 +10,10 @@ fontSize =
     }
 
 
-color : { primary : Color, warning : Color }
+color : { primary : Color, primarySubtle : Color, warning : Color }
 color =
     { primary = rgb255 13 110 253
+    , primarySubtle = rgba255 13 110 253 0.6
     , warning = rgb255 255 193 7
     }
 
